@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
-from twilio.rest import Client
 import telegram
 if os.environ["TELEGRAM_BOT_TOKEN"] is not None:
     bot = telegram.Bot(token=os.environ["TELEGRAM_BOT_TOKEN"])
@@ -22,8 +21,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 availableclasses=[]
-account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-auth_token = os.environ["TWILIO_AUTH_TOKEN"]
 
 IS_MACOS = platform.system() == 'Darwin' # Define boolean for if the platform is macOS or not, useful for Keys.COMMAND vs Keys.CONTROl
 
@@ -57,7 +54,6 @@ INTERVAL = args.INTERVAL
 HEADLESS = args.HEADLESS
 
 login = "https://cas.tamu.edu/cas/login?service=https://howdy.tamu.edu/uPortal/Login&renew=true"
-client = Client(account_sid, auth_token)
 chrome_options = Options()
 if HEADLESS is True: 
     chrome_options.add_argument("--headless") # doesn't open an actual chrome window

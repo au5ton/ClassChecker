@@ -2,7 +2,13 @@
 
 _Updates by @au5ton:_
 
-I've updated the software to work with the new CAS login, as well as some other tweaks.
+- Works with new 2-page CAS login that appeared in 2018
+- Replaced Twilio with Telegram (because Twilio costs money and SMS sucks)
+- Uses a `.env` file for sensitive information. (Shame on you @alalith for including API keys in public code!)
+- Uses chromedriver instead of phantomjs
+- Cleaned up source control of .exe files and junk
+- Managed pip modules with a `requirements.txt` file
+- Made `checker.py` an interactive tool
 
 _Original README by @alalith:_
 > ### What is this?
