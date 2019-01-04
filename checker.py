@@ -108,8 +108,9 @@ while True:
     output=f'Here are the following available classes for {DEPT} {COURSE}:\n'
     #print(classes)
     classes_open = False # flag
+    desired_section_open = False
     for class_ in classes:
-        if "add to worksheet" in class_.find_all('td')[0].text:
+        if "add to worksheet" in class_.find_all('td')[0].text: # if section is open
             classes_open = True
             crn = class_.find_all('td')[1].text
             course = class_.find_all('td')[3].text
@@ -124,13 +125,18 @@ while True:
             if SECTION is None:
                 output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
             elif SECTION.strip().lower() in section.strip().lower():
+                desired_section_open = True
                 output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
     if not classes_open:
+        output += "none"
+    if SECTION is not None and not desired_section_open:
         output += "none"
     t = datetime.datetime.now()
     stamp = t.strftime("%m/%d/%Y @ %I:%M%p")
     print(f"[ {stamp} ] ",end="")
     print(output)
-    if classes_open:
+    if classes_open and SECTION is None:
+        bot.send_message(chat_id=os.environ["TELEGRAM_CHAT_ID"], text=output)
+    if desired_section_open is True:
         bot.send_message(chat_id=os.environ["TELEGRAM_CHAT_ID"], text=output)
     time.sleep(INTERVAL) # wait for INTERVAL seconds (default: 5 min)
