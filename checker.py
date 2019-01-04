@@ -105,7 +105,7 @@ while True:
     soup = BeautifulSoup(html, 'html.parser')
     classes = soup.find_all('tbody')[3].find_all('tr')
     classes = classes[2:]
-    output=f'Here are the following available classes for {DEPT} {COURSE}:\n'
+    output=f'Here are the following available classes for {DEPT} {COURSE}-{SECTION}:\n'
     #print(classes)
     classes_open = False # flag
     desired_section_open = False
