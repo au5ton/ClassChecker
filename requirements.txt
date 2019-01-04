@@ -1,0 +1,5 @@
+bs4==0.0.1
+python-dotenv==0.10.1
+selenium==3.141.0
+twilio==6.22.1
+python-telegram-bot==11.1.0

@@ -2,9 +2,13 @@ import os
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 from twilio.rest import Client
+import telegram
+if os.environ["TELEGRAM_BOT_TOKEN"] is not None:
+    bot = telegram.Bot(token=os.environ["TELEGRAM_BOT_TOKEN"])
 import time
 import urllib
 import urllib.request
+import urllib.parse
 import platform
 import datetime
 import argparse
@@ -77,8 +81,9 @@ else:
     inputElement.send_keys(Keys.DELETE)
 inputElement.send_keys(os.environ["TAMU_PASSWORD"])
 inputElement.submit()
+time.sleep(3)
 while True:
-    searchlink='https://howdy.tamu.edu/uPortal/p/TAMU-APP-Launcher.ctf3/detached/render.uP?pP_targetEndpoint=bwykfcls.p_sel_crse_search'
+    searchlink = 'https://howdy.tamu.edu/uPortal/p/TAMU-APP-Launcher.ctf3/detached/render.uP?pP_targetEndpoint=bwykfcls.p_sel_crse_search'
     browser.get(searchlink)
 
     #browser.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
@@ -125,7 +130,6 @@ while True:
     stamp = t.strftime("%m/%d/%Y @ %I:%M%p")
     print(f"[ {stamp} ] ",end="")
     print(output)
-    print(classes_open)
     if classes_open:
-        client.messages.create(to=os.environ["TWILIO_PHONE_TO"],from_=os.environ["TWILIO_PHONE_FROM"],body=output)
+        bot.send_message(chat_id=os.environ["TELEGRAM_CHAT_ID"], text=output)
     time.sleep(INTERVAL) # wait for INTERVAL seconds (default: 5 min)
