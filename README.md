@@ -9,6 +9,7 @@ _Updates by @au5ton:_
 - Cleaned up source control of .exe files and junk
 - Managed pip modules with a `requirements.txt` file
 - Made `checker.py` an interactive tool
+- Added option to monitor a specific section
 
 _Original README by @alalith:_
 > ### What is this?
