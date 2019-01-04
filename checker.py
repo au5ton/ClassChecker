@@ -119,7 +119,7 @@ while True:
             instructor = class_.find_all('td')[13].text
             availableclasses.append({'crn':crn,'course':course,'section':section,'title':title,'days':days,'time':time_,'remaining':remaining,'instructor':instructor})
             #print(availableclasses)
-            output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip())+'\n\n'
+            output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
     if not classes_open:
         output += "none"
     t = datetime.datetime.now()
