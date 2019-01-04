@@ -3,7 +3,7 @@
 _Updates by @au5ton:_
 
 - Works with new 2-page CAS login that appeared in 2018
-- Replaced Twilio with Telegram (because Twilio costs money and SMS sucks)
+- Replaced Twilio with [Telegram](https://telegram.org) (because Twilio costs money and SMS sucks)
 - Uses a `.env` file for sensitive information. (Shame on you @alalith for including API keys in public code!)
 - Uses chromedriver instead of phantomjs
 - Cleaned up source control of .exe files and junk
