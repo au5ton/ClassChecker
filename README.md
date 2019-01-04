@@ -23,3 +23,6 @@ _Original README by @alalith:_
 - Edit `.env`. CHROME_USER_DATA_DIR is important to save Duo authentication.
 - Run `python checker.py --help` to learn how to use the tool
 - Use the tool
+
+# Disclosure
+Sometimes this script fails because the [class search fails](img/fail.png) for no reason. I've found that it happens when there are 2 active Howdy sessions at once, so try not to use Howdy period while running this script.
