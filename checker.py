@@ -7,6 +7,8 @@ import urllib
 import urllib.request
 import platform
 import datetime
+import argparse
+import platform
 from bs4 import BeautifulSoup
 from time import sleep
 from selenium import webdriver
@@ -18,11 +20,43 @@ from selenium.webdriver.chrome.options import Options
 availableclasses=[]
 account_sid = os.environ["TWILIO_ACCOUNT_SID"]
 auth_token = os.environ["TWILIO_AUTH_TOKEN"]
+
+IS_MACOS = platform.system() == 'Darwin' # Define boolean for if the platform is macOS or not, useful for Keys.COMMAND vs Keys.CONTROl
+
+DEPT =     "HIST"
+COURSE =   "105"
+SEMESTER = "201911" # inspect element on "Search by Term" dropdown
+SEMESTER_HELP = """
+Semester Format: [Y]ear, [S]emester, [C]ampus as YYYYSC. 
+        S = 1 if Spring, S = 2 if Summer, S = 3 if Fall. 
+        C = 1 if CSTAT, C = 2 if Galveston, C = 3 if Qatar, + others. 
+        Example: 201911 is Spring 2019 CSTAT. 
+        """
+
+# cli arguments
+parser = argparse.ArgumentParser(epilog=SEMESTER_HELP)
+parser.add_argument("-D", action="store", dest="DEPT", type=str, help="Specify DEPT as a string. Ex: HIST")
+parser.add_argument("-C", action="store", dest="COURSE", type=str, help="Specify COURSE as a string. Ex: 105")
+parser.add_argument("-S", action="store", dest="SEMESTER", type=str, help=f"Specify semester as a string. Ex: 201911.")
+parser.add_argument("-I", action="store", dest="INTERVAL", default=300, type=int, help=f"Specify an interval between checks in seconds. Default: 300s")
+parser.add_argument("--headless", action="store_true", dest="HEADLESS", default=False, help=f"Specify if program should run Chrome headless or not.")
+args = parser.parse_args()
+print(f"{args.DEPT} {args.COURSE} {args.SEMESTER} @ {args.INTERVAL}s (Headless: {args.HEADLESS})")
+
+if args.DEPT is None or args.COURSE is None or args.SEMESTER is None:
+    print("Must supply all arguments. See -h.")
+    exit(1)
+DEPT = args.DEPT
+COURSE = args.COURSE
+SEMESTER = args.SEMESTER
+INTERVAL = args.INTERVAL
+HEADLESS = args.HEADLESS
+
 login = "https://cas.tamu.edu/cas/login?service=https://howdy.tamu.edu/uPortal/Login&renew=true"
 client = Client(account_sid, auth_token)
 chrome_options = Options()
-# doesn't open an actual chrome window
-#chrome_options.add_argument("--headless")
+if HEADLESS is True: 
+    chrome_options.add_argument("--headless") # doesn't open an actual chrome window
 # silences console spam
 chrome_options.add_argument('--log-level=3')
 chrome_options.add_argument('--disable-logging')
@@ -35,6 +69,12 @@ inputElement.send_keys(os.environ["TAMU_NETID"])
 inputElement = browser.find_element_by_css_selector("button[type=\"submit\"]")
 inputElement.click()
 inputElement = browser.find_element_by_id('password')
+if IS_MACOS:  # just in case password autofills
+    inputElement.send_keys(Keys.COMMAND + "a")
+    inputElement.send_keys(Keys.DELETE)
+else:
+    inputElement.send_keys(Keys.CONTROL + "a")
+    inputElement.send_keys(Keys.DELETE)
 inputElement.send_keys(os.environ["TAMU_PASSWORD"])
 inputElement.submit()
 while True:
@@ -44,15 +84,6 @@ while True:
     #browser.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
     #wait = WebDriverWait(browser, 10)
     #submit = wait.until(EC.presence_of_element_located((By.LINK_TEXT, "Submit")))
-
-    DEPT =     "HIST"
-    COURSE =   "105"
-    SEMESTER = "201911" # inspect element on "Search by Term" dropdown
-                        # Format: [Y]ear, [S]emester, [C]ampus
-                        # YYYYSC
-                        # S = 1 if Spring, S = 2 if Summer, S = 3 if Fall
-                        # C = 1 if CSTAT, C = 2 if Galveston, C = 3 if Qatar, + others
-                        # Example: 201911 is Spring 2019 CSTAT
 
     browser.switch_to.frame(browser.find_element_by_tag_name("iframe"))
     button=browser.find_element_by_xpath('//input[@value="Submit"]')
@@ -97,4 +128,4 @@ while True:
     print(classes_open)
     if classes_open:
         client.messages.create(to=os.environ["TWILIO_PHONE_TO"],from_=os.environ["TWILIO_PHONE_FROM"],body=output)
-    time.sleep(20)
+    time.sleep(INTERVAL) # wait for INTERVAL seconds (default: 5 min)
