@@ -38,17 +38,19 @@ Semester Format: [Y]ear, [S]emester, [C]ampus as YYYYSC.
 parser = argparse.ArgumentParser(epilog=SEMESTER_HELP)
 parser.add_argument("-D", action="store", dest="DEPT", type=str, help="Specify DEPT as a string. Ex: HIST")
 parser.add_argument("-C", action="store", dest="COURSE", type=str, help="Specify COURSE as a string. Ex: 105")
-parser.add_argument("-S", action="store", dest="SEMESTER", type=str, help=f"Specify semester as a string. Ex: 201911.")
+parser.add_argument("-S", action="store", dest="SECTION", type=str, help=f"Specify SECTION as a string. Ex: 509.")
+parser.add_argument("-Y", action="store", dest="SEMESTER", type=str, help=f"Specify SEMESTER as a string. Ex: 201911.")
 parser.add_argument("-I", action="store", dest="INTERVAL", default=300, type=int, help=f"Specify an interval between checks in seconds. Default: 300s")
-parser.add_argument("--headless", action="store_true", dest="HEADLESS", default=False, help=f"Specify if program should run Chrome headless or not.")
+parser.add_argument("--headless", action="store_true", dest="HEADLESS", default=False, help=f"Specify if program should run Chrome browser headless or not.")
 args = parser.parse_args()
-print(f"{args.DEPT} {args.COURSE} {args.SEMESTER} @ {args.INTERVAL}s (Headless: {args.HEADLESS})")
+print(f"{args.DEPT} {args.COURSE}-{args.SECTION} {args.SEMESTER} @ {args.INTERVAL}s (Headless: {args.HEADLESS})")
 
 if args.DEPT is None or args.COURSE is None or args.SEMESTER is None:
-    print("Must supply all arguments. See -h.")
+    print("Must supply: DEPT, COURSE, and SEMESTER. See -h.")
     exit(1)
 DEPT = args.DEPT
 COURSE = args.COURSE
+SECTION = args.SECTION
 SEMESTER = args.SEMESTER
 INTERVAL = args.INTERVAL
 HEADLESS = args.HEADLESS
@@ -119,7 +121,10 @@ while True:
             instructor = class_.find_all('td')[13].text
             availableclasses.append({'crn':crn,'course':course,'section':section,'title':title,'days':days,'time':time_,'remaining':remaining,'instructor':instructor})
             #print(availableclasses)
-            output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
+            if SECTION is None:
+                output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
+            elif SECTION.strip().lower() in section.strip().lower():
+                output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
     if not classes_open:
         output += "none"
     t = datetime.datetime.now()
