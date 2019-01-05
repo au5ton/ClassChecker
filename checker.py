@@ -20,7 +20,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
-availableclasses=[]
+available_classes = []
 
 IS_MACOS = platform.system() == 'Darwin' # Define boolean for if the platform is macOS or not, useful for Keys.COMMAND vs Keys.CONTROl
 
@@ -38,12 +38,12 @@ Semester Format: [Y]ear, [S]emester, [C]ampus as YYYYSC.
 parser = argparse.ArgumentParser(epilog=SEMESTER_HELP)
 parser.add_argument("-D", action="store", dest="DEPT", type=str, help="Specify DEPT as a string. Ex: HIST")
 parser.add_argument("-C", action="store", dest="COURSE", type=str, help="Specify COURSE as a string. Ex: 105")
-parser.add_argument("-S", action="store", dest="SECTION", type=str, help=f"Specify SECTION as a string. Ex: 509.")
+parser.add_argument("-S", action="store", dest="SECTION", type=str, help=f"Specify SECTIONS as a string. Ex: 509 or 509,503,502 for multiple.")
 parser.add_argument("-Y", action="store", dest="SEMESTER", type=str, help=f"Specify SEMESTER as a string. Ex: 201911.")
 parser.add_argument("-I", action="store", dest="INTERVAL", default=300, type=int, help=f"Specify an interval between checks in seconds. Default: 300s")
 parser.add_argument("--headless", action="store_true", dest="HEADLESS", default=False, help=f"Specify if program should run Chrome browser headless or not.")
 args = parser.parse_args()
-print(f"{args.DEPT} {args.COURSE}-{args.SECTION} {args.SEMESTER} @ {args.INTERVAL}s (Headless: {args.HEADLESS})")
+print(f"{args.DEPT} {args.COURSE} (Sections: {args.SECTION}) {args.SEMESTER} @ {args.INTERVAL}s (Headless: {args.HEADLESS})")
 
 if args.DEPT is None or args.COURSE is None or args.SEMESTER is None:
     print("Must supply: DEPT, COURSE, and SEMESTER. See -h.")
@@ -54,6 +54,7 @@ SECTION = args.SECTION
 SEMESTER = args.SEMESTER
 INTERVAL = args.INTERVAL
 HEADLESS = args.HEADLESS
+desired_sections = SECTION.split(",") if SECTION is not None else [] # "501,502,503" => ['501','502','503'] or None => []
 
 login = "https://cas.tamu.edu/cas/login?service=https://howdy.tamu.edu/uPortal/Login&renew=true"
 chrome_options = Options()
@@ -105,38 +106,43 @@ while True:
     soup = BeautifulSoup(html, 'html.parser')
     classes = soup.find_all('tbody')[3].find_all('tr')
     classes = classes[2:]
-    output=f'Here are the following available classes for {DEPT} {COURSE}-{SECTION}:\n'
-    #print(classes)
-    classes_open = False # flag
-    desired_section_open = False
+    output=f'Here are the following available classes for {DEPT} {COURSE}, Sections: {SECTION if SECTION is not None else "all"}:\n'
+
+    # index the open sections
     for class_ in classes:
         if "add to worksheet" in class_.find_all('td')[0].text: # if section is open
-            classes_open = True
-            crn = class_.find_all('td')[1].text
-            course = class_.find_all('td')[3].text
-            section = class_.find_all('td')[4].text
-            title = class_.find_all('td')[7].text
-            days = class_.find_all('td')[8].text
-            time_ = class_.find_all('td')[9].text
-            remaining = class_.find_all('td')[12].text
-            instructor = class_.find_all('td')[13].text
-            availableclasses.append({'crn':crn,'course':course,'section':section,'title':title,'days':days,'time':time_,'remaining':remaining,'instructor':instructor})
-            #print(availableclasses)
-            if SECTION is None:
-                output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
-            elif SECTION.strip().lower() in section.strip().lower():
-                desired_section_open = True
-                output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT,course.strip(),section.strip(),instructor.strip(),days.strip(),time_.strip(),remaining.strip(),crn.strip())+'\n\n'
-    if not classes_open:
-        output += "none"
-    if SECTION is not None and not desired_section_open:
+            crn = class_.find_all('td')[1].text.strip()
+            course = class_.find_all('td')[3].text.strip()
+            section = class_.find_all('td')[4].text.strip()
+            title = class_.find_all('td')[7].text.strip()
+            days = class_.find_all('td')[8].text.strip()
+            time_ = class_.find_all('td')[9].text.strip()
+            remaining = class_.find_all('td')[12].text.strip()
+            instructor = class_.find_all('td')[13].text.strip()
+            available_classes.append({'crn':crn,'course':course,'section_number':section,'title':title,'days':days,'time':time_,'remaining':remaining,'instructor':instructor}) 
+    
+    available_sections = []
+    desired_classes_open = False
+    # extract available_sections for comparing to desired_sections, reduces redundancy
+    for section in available_classes:
+        available_sections.append(section["section_number"])
+    # if no section is provided, assume every section is desired
+    if len(desired_sections) is 0: 
+        desired_sections = available_sections.copy() # dont pass a reference
+    # create output
+    for section in available_classes:
+        if section["section_number"] in desired_sections:
+            desired_classes_open = True
+            output+='\t{} {}-{}, taught by {} on {} {} currently has {} seats left (CRN: {})'.format(DEPT, section["course"], section["section_number"], section["instructor"], section["days"], section["time"], section["remaining"], section["crn"])+'\n\n'
+
+    # if no desired classes were found, set output to none
+    if not desired_classes_open:
         output += "none"
     t = datetime.datetime.now()
     stamp = t.strftime("%m/%d/%Y @ %I:%M%p")
-    print(f"[ {stamp} ] ",end="")
+    print(f"[ {stamp} ] ",end="") # prepends timestamp to output message (end="" prevents newline)
     print(output)
-    if classes_open and SECTION is None:
-        bot.send_message(chat_id=os.environ["TELEGRAM_CHAT_ID"], text=output)
-    if desired_section_open is True:
+    # only notify user if there is anything desired open
+    if desired_classes_open:
         bot.send_message(chat_id=os.environ["TELEGRAM_CHAT_ID"], text=output)
     time.sleep(INTERVAL) # wait for INTERVAL seconds (default: 5 min)
